@@ -7,6 +7,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
@@ -54,6 +55,7 @@ public class MainActivity extends AppCompatActivity {
     private WeatherRVAdapter weatherRVAdapter;
     private LocationManager locationManager;
     private int PERMISSION_CODE = 1;
+    private ArrayList<String> favouritesList;
 
 
     @Override
@@ -82,6 +84,8 @@ public class MainActivity extends AppCompatActivity {
         Location location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
         getWeatherInfo(getCityName(location.getLatitude(), location.getLongitude()));
 
+        favouritesList = new ArrayList<>();
+
         search(searchIV);
         //homeRL.setVisibility(View.VISIBLE);
     }
@@ -107,6 +111,10 @@ public class MainActivity extends AppCompatActivity {
         }
         else{
             cityNameTV.setText(searchCity.toUpperCase(Locale.ROOT));
+            //System.out.println(cityNameTV.getText());
+            if(!favouritesList.contains(cityNameTV.getText().toString())){
+                favouritesList.add(cityNameTV.getText().toString());
+            }
             getWeatherInfo(searchCity);
         }
     }
@@ -123,6 +131,8 @@ public class MainActivity extends AppCompatActivity {
                     String city = address.getAdminArea();
                     if (city != null || !city.equals("")) {
                         cityName = city;
+
+                        //favouritesList.add(city);
                     }
                     else {
                         Toast.makeText(this, "City not found", Toast.LENGTH_LONG).show();
@@ -132,10 +142,12 @@ public class MainActivity extends AppCompatActivity {
         }catch(IOException e) {
             e.printStackTrace();
         }
+
         return cityName;
     }
 
-     private void getWeatherInfo(String cityName){
+     public void getWeatherInfo(String cityName){
+
         String url = "https://api.weatherapi.com/v1/forecast.json?key=b49cf879bc4e4ad2a2b110638212912&q=" + cityName + "&days=1&aqi=no&alerts=no";
         //cityNameTV.setText(cityName.toUpperCase());
         RequestQueue requestQueue = Volley.newRequestQueue(this);
@@ -144,7 +156,7 @@ public class MainActivity extends AppCompatActivity {
             public void onResponse(JSONObject response) {
                 loadingPB.setVisibility(View.GONE);
                 homeRL.setVisibility(View.VISIBLE);
-                searchIV.setVisibility(View.VISIBLE);
+                //searchIV.setVisibility(View.VISIBLE);
                 weatherRVModelArrayList.clear();
                 //String temperature = response.getJSONObject("current").getString("temp_c");
                 try {
@@ -192,7 +204,18 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(MainActivity.this, "City name invalid", Toast.LENGTH_LONG).show();
             }
         });
+
+
         requestQueue.add(jsonObjectRequest);
 
+    }
+    public void launchFavs(View v){
+        Intent i = new Intent(this, FavouriteAcitivity.class);
+        String[] favvs = favouritesList.toArray(new String[favouritesList.size()]);
+        i.putExtra("COOL", favvs);
+        for(String city: favvs) {
+            System.out.println(city);
+        }
+        startActivity(i);
     }
 }
